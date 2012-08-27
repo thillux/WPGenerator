@@ -15,7 +15,7 @@ If you want to create a 1920x1200 wallpaper, type:
 
 	./WPGenerator --width 1920 --height 1200
 
-The number of circles and waves are optional. The can be chosen explicitly:
+The number of circles and waves are optional. They can be chosen explicitly:
 
 	./WPGenerator --width 1920 --height 1200 --circles 50 --waves 3
 
