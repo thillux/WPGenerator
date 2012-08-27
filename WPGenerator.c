@@ -12,13 +12,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#define M_PI  3.141592653589793
-#define PHI   1.6180339887
-#define LOGO_FILENAME "archlinux-logo-light-scalable.svg"
-#define NUM_CIRCLES_DEFAULT 200
-#define NUM_WAVES_DEFAULT 200
-#define MAX_RANDOM_CIRCLES 500
-#define MAX_RANDOM_WAVES 5000
+#define M_PI                3.141592653589793
+#define PHI                 1.6180339887
+#define LOGO_FILENAME       "archlinux-logo-light-scalable.svg"
+#define NUM_CIRCLES_DEFAULT 0
+#define NUM_WAVES_DEFAULT   5000
+#define MAX_RANDOM_CIRCLES  5000
+#define MAX_RANDOM_WAVES    5000
 
 struct ProgramArguments {
     int screenWidth;
@@ -64,14 +64,12 @@ void drawRandomCircles(cairo_t* cr) {
     int surfaceWidth = getSurfaceWidth(cr);
 
     // dark blue
-    cairo_set_source_rgba(cr, 60.0/255.0, 76.0/255.0, 85.0/255.0, 0.3 * rng());
     cairo_set_line_width(cr, 2.0 * rng() + 3.0);
+    cairo_set_source_rgba(cr, 60.0/255.0, 76.0/255.0, 85.0/255.0, 0.3 * rng());
     cairo_arc(cr, rng() * surfaceWidth, rng() * surfaceHeight, rng() * 20, 0, 2.0 * M_PI);
-
-    if (rng() > 0.3)
-        cairo_stroke(cr);
-    else 
-        cairo_fill(cr);
+    cairo_fill_preserve(cr);
+    cairo_set_source_rgba(cr, 60.0/255.0, 76.0/255.0, 85.0/255.0, 0.3 * rng());
+    cairo_stroke(cr);
 }
 
 void drawRandomSineWaves(cairo_t* cr) {
@@ -125,17 +123,19 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
     int borderDistance = 20;
     int logoWidth = logoDimensions->width;
     int logoHeight = logoDimensions->height;
+
     int rectY = 1.0 / PHI * surfaceHeight - logoHeight / 2;
     int logoOriginX = surfaceWidth - logoWidth - borderDistance;
     int logoOriginY = 1.0 / PHI * surfaceHeight - logoHeight / 2;
 
     // grey
-    cairo_set_source_rgb(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0);
+    cairo_set_source_rgba(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0, 0.9);
     cairo_rectangle(cr, 0, rectY, surfaceWidth, logoHeight);
     cairo_fill(cr);
 
-    cairo_set_line_width(cr, 1.0);
+    cairo_set_line_width(cr, 2.0);
 
+    cairo_set_source_rgba(cr, 23.0/255.0, 147.0/255.0, 209.0/255.0, 0.8);
     cairo_move_to(cr, 0, rectY);
     cairo_rel_line_to(cr, surfaceWidth, 0);
     cairo_stroke(cr);
@@ -256,6 +256,45 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 	}
 }
 
+void drawBackground(cairo_t* cr) {
+    int surfaceHeight = getSurfaceHeight(cr);
+    int surfaceWidth  = getSurfaceWidth(cr);
+
+    cairo_set_source_rgba(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0, 1.0);
+    cairo_rectangle(cr, 0, 0, surfaceWidth, surfaceHeight);
+    cairo_fill(cr);
+
+    cairo_pattern_t *pat;
+    pat = cairo_pattern_create_linear(0.0, 0.0,  surfaceWidth, surfaceHeight);
+    cairo_pattern_add_color_stop_rgba(pat, 0, 23.0/255.0, 147.0/255.0, 209.0/255.0, 0.1);
+    cairo_pattern_add_color_stop_rgba(pat, 1, 100.0/255.0, 100.0/255.0, 100.0/255.0, 0.1);
+    cairo_rectangle(cr, 0, 0, surfaceWidth, surfaceHeight);
+    cairo_set_source(cr, pat);
+    cairo_fill(cr);
+    cairo_pattern_destroy(pat);
+}
+
+void drawDotPattern(cairo_t* cr) {
+    int surfaceHeight = getSurfaceHeight(cr);
+    int surfaceWidth  = getSurfaceWidth(cr);
+
+    cairo_set_source_rgba(cr, 1,1,1,0.2);
+    cairo_set_line_width(cr, 2.0);
+    // draw points
+    double dx = surfaceWidth / 30.0;
+    double x = dx;
+    double y = dx;
+    while (y < surfaceHeight) {
+        while (x < surfaceWidth) {
+            cairo_arc(cr, x, y, 2, 0, 2.0 * M_PI);
+            cairo_fill (cr);
+            x += dx;
+        }
+        x = dx;
+        y += dx;
+    }
+}
+
 int main(int argc, char ** argv) {
     struct ProgramArguments * progArgs = (struct ProgramArguments *) malloc(sizeof(struct ProgramArguments));
     getArguments(argc, argv, progArgs);
@@ -271,10 +310,7 @@ int main(int argc, char ** argv) {
                                          progArgs->screenHeight);
     cairo_t* cr = cairo_create(surface);
 
-    // fill background with grey color
-    cairo_set_source_rgb(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0);
-    cairo_rectangle(cr, 0, 0, progArgs->screenWidth, progArgs->screenHeight);
-    cairo_fill(cr);
+    drawBackground(cr);
     printf("Background filled.\n");
 
     for (int circle = 0; circle < progArgs->numCircles; ++circle)
@@ -284,6 +320,9 @@ int main(int argc, char ** argv) {
     for (int wave = 0 ; wave < progArgs->numWaves; ++wave)
         drawRandomSineWaves(cr);
     printf("Waves drawn.\n");
+
+    drawDotPattern(cr);
+    printf("Dot Pattern drawn.\n");
 
     drawArchLogo(cr, archLogoSVG);
     printf("Logo drawn.\n");
