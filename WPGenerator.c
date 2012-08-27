@@ -123,16 +123,14 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
 
     double surfaceHeight = getSurfaceHeight(cr);
     double surfaceWidth  = getSurfaceWidth(cr);
-    double borderDistance = 20;
     double logoWidth = logoDimensions->width;
     double logoHeight = logoDimensions->height;
     double scale = (0.17 * surfaceHeight) / logoHeight;
-    borderDistance *= scale;
     logoWidth *= scale;
     logoHeight *= scale;
     
     double rectY = 1.0 / PHI * surfaceHeight - logoHeight / 2.0;
-    double logoOriginX = surfaceWidth - logoWidth - borderDistance;
+    double logoOriginX = (surfaceWidth - logoWidth) / 2.0;
     double logoOriginY = 1.0 / PHI * surfaceHeight - logoHeight / 2.0;
 
     // grey
