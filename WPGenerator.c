@@ -84,7 +84,7 @@ void drawRandomSineWaves(cairo_t* cr) {
     double period2 = 2 * period1;
 
     double startX = 0.0;
-    double startY = surfaceHeight * rng();
+    double startY = surfaceHeight * 1.1111 * (rng() - 0.1);
 
     double phase1 = rng() * surfaceWidth;
     double phase2 = rng() * surfaceWidth;
@@ -118,15 +118,19 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
     RsvgDimensionData* logoDimensions =(RsvgDimensionData*) malloc(sizeof(RsvgDimensionData));
     rsvg_handle_get_dimensions(archLogoSVG, logoDimensions);
 
-    int surfaceHeight = getSurfaceHeight(cr);
-    int surfaceWidth  = getSurfaceWidth(cr);
-    int borderDistance = 20;
-    int logoWidth = logoDimensions->width;
-    int logoHeight = logoDimensions->height;
-
-    int rectY = 1.0 / PHI * surfaceHeight - logoHeight / 2;
-    int logoOriginX = surfaceWidth - logoWidth - borderDistance;
-    int logoOriginY = 1.0 / PHI * surfaceHeight - logoHeight / 2;
+    double surfaceHeight = getSurfaceHeight(cr);
+    double surfaceWidth  = getSurfaceWidth(cr);
+    double borderDistance = 20;
+    double logoWidth = logoDimensions->width;
+    double logoHeight = logoDimensions->height;
+    double scale = (0.17 * surfaceHeight) / logoHeight;
+    borderDistance *= scale;
+    logoWidth *= scale;
+    logoHeight *= scale;
+    
+    double rectY = 1.0 / PHI * surfaceHeight - logoHeight / 2.0;
+    double logoOriginX = surfaceWidth - logoWidth - borderDistance;
+    double logoOriginY = 1.0 / PHI * surfaceHeight - logoHeight / 2.0;
 
     // grey
     cairo_set_source_rgba(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0, 0.9);
@@ -147,11 +151,14 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
     cairo_surface_t* surface = cairo_get_group_target(cr);
     cairo_surface_t* logoSurface = cairo_surface_create_for_rectangle(surface, logoOriginX, logoOriginY, logoWidth, logoHeight);
     cairo_t* logoContext = cairo_create(logoSurface);
-
+    cairo_save(logoContext);
+    cairo_scale(logoContext, scale, scale);
+    
     rsvg_handle_render_cairo(archLogoSVG, logoContext);
     rsvg_handle_close(archLogoSVG, NULL);
     g_object_unref(archLogoSVG);
-
+    
+    cairo_restore(logoContext);
     cairo_destroy(logoContext);
     cairo_surface_destroy(logoSurface);
     free(logoDimensions);

@@ -1,6 +1,6 @@
 # WPGenerator
 WPGenerator is a simple wallpaper generator for Arch Linux.
-You can use it to create differently sized wallpapers.
+You can use it to create differently sized wallpapers with nearly the same, sharp looking impression.
 
 # Dependencies
 * cairo
@@ -24,6 +24,5 @@ or implicitly:
 	./WPGenerator --width 1920 --height 1200 --random
 
 # TODO
-* logo resizing
 * faster wave drawing
 
