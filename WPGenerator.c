@@ -1,28 +1,52 @@
 #include <cairo.h>
 #include <librsvg/rsvg.h>
 #include <librsvg/rsvg-cairo.h>
+#include <getopt.h>
 #include <limits.h>
 #include <math.h>
 #include <regex.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #define M_PI  3.141592653589793
 #define PHI   1.6180339887
+#define LOGO_FILENAME "archlinux-logo-light-scalable.svg"
+#define NUM_CIRCLES_DEFAULT 200
+#define NUM_WAVES_DEFAULT 200
+#define MAX_RANDOM_CIRCLES 500
+#define MAX_RANDOM_WAVES 5000
+
+struct ProgramArguments {
+    int screenWidth;
+    int screenHeight;
+    int numCircles;
+    int numWaves;
+};
+
+unsigned int urandomRng(void) {
+	int urandomFD = open("/dev/urandom", O_RDONLY);
+	unsigned int randomInt;
+	read(urandomFD, &randomInt, sizeof(randomInt));
+	close(urandomFD);
+	return randomInt;
+}
 
 // xorshift
-double rng() {
-  static uint32_t x = 123456789;
-  static uint32_t y = 362436069;
-  static uint32_t z = 521288629;
-  static uint32_t w = 88675123;
+double rng(void) {
+	static uint32_t x = 123456789;
+	static uint32_t y = 362436069;
+	static uint32_t z = 521288629;
+	static uint32_t w = 88675123;
 
-  uint32_t t = x ^ (x << 11);
-  x = y; y = z; z = w;
-  w ^= (w >> 19) ^ t ^ (t >> 8);
+	uint32_t t = x ^ (x << 11);
+	x = y; y = z; z = w;
+	w ^= (w >> 19) ^ t ^ (t >> 8);
 
-  return (double) w / UINT_MAX;
+	return (double) w / UINT_MAX;
 }
 
 int getSurfaceWidth(cairo_t* cr) {
@@ -134,54 +158,130 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
 }
 
 void usage(void) {
-    printf("Usage: ./WPGenerator width height\n");
+    printf("Usage: ./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random]\n");
 }
 
-void checkArguments(int argc, char ** argv) {
-    if (argc != 3) {
-        usage();
-        exit(EXIT_FAILURE);
-    }
-
+void checkNumericalArgument(char* arg) {
     regex_t regex;
     regcomp(&regex, "^[[:digit:]]+$", REG_EXTENDED);
 
-    for (int argument = 1; argument <= 2; ++argument) {
-        if(regexec(&regex, argv[argument], 0, NULL, 0) == REG_NOMATCH) {
-            usage();
-            exit(EXIT_FAILURE);
-        }
+    if(regexec(&regex, arg, 0, NULL, 0) == REG_NOMATCH) {
+    	printf("No match %s", arg);
+    	usage();
+        exit(EXIT_FAILURE);
     }
 
     regfree(&regex);
 }
 
-int main(int argc, char ** argv) {
-    checkArguments(argc, argv);
+void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
+	bool widthOptionSet = false;
+	bool heightOptionSet = false;
+	bool circlesOptionSet = false;
+	bool wavesOptionSet = false;
+	bool randomOptionSet = false;
 
-    int wallpaperWidth = atoi(argv[1]);
-    int wallpaperHeight = atoi(argv[2]);
+	static struct option long_options[] = {
+		{ "random",  no_argument, 		0, 'r' },
+		{ "width", 	 required_argument, 0, 'w' },
+		{ "height",  required_argument, 0, 'h' },
+		{ "circles", required_argument, 0, 'c' },
+		{ "waves", 	 required_argument, 0, 's' },
+		{ 0, 0, 0, 0 }
+	};
+
+	int shortOptionValue;
+	while (true) {
+		shortOptionValue = getopt_long(argc, argv, "w:h:cs", long_options, NULL);
+
+		/* Detect the end of the options. */
+		if (shortOptionValue == -1)
+			break;
+
+		switch (shortOptionValue) {
+		case 'r':
+			randomOptionSet = true;
+			break;
+		case 'w':
+			checkNumericalArgument(optarg);
+			widthOptionSet = true;
+			progArgs->screenWidth = atoi(optarg);
+			break;
+		case 'h':
+			checkNumericalArgument(optarg);
+			heightOptionSet = true;
+			progArgs->screenHeight = atoi(optarg);
+			break;
+		case 'c':
+			checkNumericalArgument(optarg);
+			circlesOptionSet = true;
+			progArgs->numCircles = atoi(optarg);
+			break;
+		case 's':
+			checkNumericalArgument(optarg);
+			wavesOptionSet = true;
+			progArgs->numWaves = atoi(optarg);
+			break;
+		case '?':
+			break;
+		default:
+			abort();
+		}
+	}
+
+	if (! (widthOptionSet && heightOptionSet)) {
+		usage();
+		exit(EXIT_FAILURE);
+	}
+
+	if (!circlesOptionSet)
+		progArgs->numCircles = NUM_CIRCLES_DEFAULT;
+	if (!wavesOptionSet)
+		progArgs->numWaves = NUM_WAVES_DEFAULT;
+
+	if (randomOptionSet) {
+		char * tmpString = (char*) malloc(50 * sizeof(char));
+
+		printf("Random Mode\n");
+
+		progArgs->numCircles = urandomRng() % MAX_RANDOM_CIRCLES;
+		sprintf(tmpString, "%i", progArgs->numCircles);
+		printf("Number circles: %s\n", tmpString);
+
+		progArgs->numWaves = urandomRng() % MAX_RANDOM_WAVES;
+		sprintf(tmpString, "%i", progArgs->numWaves);
+		printf("Number waves: %s\n", tmpString);
+
+		free(tmpString);
+	}
+}
+
+int main(int argc, char ** argv) {
+    struct ProgramArguments * progArgs = (struct ProgramArguments *) malloc(sizeof(struct ProgramArguments));
+    getArguments(argc, argv, progArgs);
 
     g_type_init();
-    RsvgHandle* archLogoSVG = rsvg_handle_new_from_file("archlinux-logo-light-scalable.svg", NULL);
+    RsvgHandle* archLogoSVG;
+    archLogoSVG = rsvg_handle_new_from_file(LOGO_FILENAME, NULL);
     printf("Reading logo done.\n");
 
-    cairo_surface_t* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, wallpaperWidth, wallpaperHeight);
+    cairo_surface_t* surface;
+    surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
+                                         progArgs->screenWidth,
+                                         progArgs->screenHeight);
     cairo_t* cr = cairo_create(surface);
 
     // fill background with grey color
     cairo_set_source_rgb(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0);
-    cairo_rectangle(cr, 0, 0, wallpaperWidth, wallpaperHeight);
+    cairo_rectangle(cr, 0, 0, progArgs->screenWidth, progArgs->screenHeight);
     cairo_fill(cr);
     printf("Background filled.\n");
 
-    const int NUM_CIRCLES = 200;
-    for (int circle = 0; circle < NUM_CIRCLES; ++circle)
+    for (int circle = 0; circle < progArgs->numCircles; ++circle)
         drawRandomCircles(cr);
     printf("Circles drawn.\n");
 
-    const int NUM_WAVES = 500;
-    for (int wave = 0 ; wave < NUM_WAVES; ++wave)
+    for (int wave = 0 ; wave < progArgs->numWaves; ++wave)
         drawRandomSineWaves(cr);
     printf("Waves drawn.\n");
 
@@ -193,6 +293,7 @@ int main(int argc, char ** argv) {
 
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
+    free(progArgs);
     printf("Exiting.\n");
     return EXIT_SUCCESS;
 }
