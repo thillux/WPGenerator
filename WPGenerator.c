@@ -16,7 +16,7 @@
 #define PHI                 1.6180339887
 #define LOGO_FILENAME       "archlinux-logo-light-scalable.svg"
 #define NUM_CIRCLES_DEFAULT 0
-#define NUM_WAVES_DEFAULT   5000
+#define NUM_WAVES_DEFAULT   0
 #define MAX_RANDOM_CIRCLES  5000
 #define MAX_RANDOM_WAVES    5000
 
@@ -25,6 +25,9 @@ struct ProgramArguments {
     int screenHeight;
     int numCircles;
     int numWaves;
+    bool quadsBackground;
+    bool dotPattern;
+    bool noLogo;
 };
 
 unsigned int urandomRng(void) {
@@ -165,7 +168,7 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
 }
 
 void usage(void) {
-    printf("Usage: ./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random]\n");
+    printf("Usage: ./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --nologo]\n");
 }
 
 void checkNumericalArgument(char* arg) {
@@ -187,8 +190,14 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 	bool circlesOptionSet = false;
 	bool wavesOptionSet = false;
 	bool randomOptionSet = false;
-
+    bool quadsOptionSet = false;
+    bool dotsOptionSet = false;
+    bool showLogoOptionSet = false;
+    
 	static struct option long_options[] = {
+        { "nologo",  no_argument, 		0, 'l' },
+        { "dots",    no_argument, 		0, 'd' },
+        { "quads",   no_argument, 		0, 'q' },
 		{ "random",  no_argument, 		0, 'r' },
 		{ "width", 	 required_argument, 0, 'w' },
 		{ "height",  required_argument, 0, 'h' },
@@ -199,13 +208,25 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
 	int shortOptionValue;
 	while (true) {
-		shortOptionValue = getopt_long(argc, argv, "w:h:cs", long_options, NULL);
+		shortOptionValue = getopt_long(argc, argv, "w:h:csq", long_options, NULL);
 
 		/* Detect the end of the options. */
 		if (shortOptionValue == -1)
 			break;
 
 		switch (shortOptionValue) {
+        case 'l':
+            showLogoOptionSet = true;
+            progArgs->noLogo = true;
+            break;
+        case 'd':
+            dotsOptionSet = true;
+            progArgs->dotPattern = true;
+            break;
+        case 'q':
+            quadsOptionSet = true;
+            progArgs->quadsBackground = true;
+            break;
 		case 'r':
 			randomOptionSet = true;
 			break;
@@ -230,6 +251,8 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 			progArgs->numWaves = atoi(optarg);
 			break;
 		case '?':
+            usage();
+            exit(EXIT_FAILURE);
 			break;
 		default:
 			abort();
@@ -261,9 +284,18 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
 		free(tmpString);
 	}
+    
+    if (!dotsOptionSet)
+        progArgs->dotPattern = false;
+    
+    if (!quadsOptionSet)
+        progArgs->quadsBackground = false;
+    
+    if (!showLogoOptionSet)
+        progArgs->noLogo = false;
 }
 
-void drawBackground(cairo_t* cr) {
+void drawSimpleFilledBackground(cairo_t* cr) {
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
 
@@ -279,6 +311,28 @@ void drawBackground(cairo_t* cr) {
     cairo_set_source(cr, pat);
     cairo_fill(cr);
     cairo_pattern_destroy(pat);
+    
+    
+}
+
+void drawQuadsBackground(cairo_t* cr) {
+    int surfaceHeight = getSurfaceHeight(cr);
+    int surfaceWidth  = getSurfaceWidth(cr);
+    
+    cairo_set_line_width(cr, 0.5);
+    int rectDim = surfaceWidth/200;
+    int x = 0.0;
+    int y = 0.0;
+    while (y < surfaceHeight) {
+        while (x < surfaceWidth) {
+            cairo_set_source_rgba(cr, 0.4, 0.4, 0.4, 0.6 * rng());
+            cairo_rectangle(cr, x, y, rectDim, rectDim);
+            cairo_fill(cr);
+            x += rectDim + 1;
+        }
+        x = 0.0;
+        y += rectDim + 1;
+    }
 }
 
 void drawDotPattern(cairo_t* cr) {
@@ -316,8 +370,10 @@ int main(int argc, char ** argv) {
                                          progArgs->screenWidth,
                                          progArgs->screenHeight);
     cairo_t* cr = cairo_create(surface);
-
-    drawBackground(cr);
+    
+    drawSimpleFilledBackground(cr);
+    if (progArgs->quadsBackground)
+        drawQuadsBackground(cr);        
     printf("Background filled.\n");
 
     for (int circle = 0; circle < progArgs->numCircles; ++circle)
@@ -328,11 +384,15 @@ int main(int argc, char ** argv) {
         drawRandomSineWaves(cr);
     printf("Waves drawn.\n");
 
-    drawDotPattern(cr);
-    printf("Dot Pattern drawn.\n");
-
-    drawArchLogo(cr, archLogoSVG);
-    printf("Logo drawn.\n");
+    if (progArgs->dotPattern) {
+        drawDotPattern(cr);
+        printf("Dot Pattern drawn.\n");
+    }
+    
+    if (!progArgs->noLogo) {
+        drawArchLogo(cr, archLogoSVG);
+        printf("Logo drawn.\n");
+    }
 
     cairo_surface_write_to_png(surface, "wallpaper.png");
     printf("Wallpaper written to file.\n");
