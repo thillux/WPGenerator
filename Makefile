@@ -6,7 +6,7 @@ INCLUDES:=`pkg-config --cflags cairo librsvg-2.0`
 PROJECTNAME:=WPGenerator
 
 all: WPGenerator.c
-	$(CC) $(CFLAGS) $(LIBS) $(INCLUDES) -o $(PROJECTNAME) $<
+	$(CC) $(CFLAGS) $(INCLUDES) -o $(PROJECTNAME) $< $(LIBS)
 
 clean:
 	rm -f *.o

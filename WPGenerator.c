@@ -227,7 +227,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
     int shortOptionValue;
     while (true) {
-        shortOptionValue = getopt_long(argc, argv, "w:h:c:s:qx", long_options, NULL);
+        shortOptionValue = getopt_long(argc, argv, "xldqrwhcs", long_options, NULL);
 
         /* Detect the end of the options. */
         if (shortOptionValue == -1)
@@ -398,7 +398,7 @@ int main(int argc, char ** argv) {
 
     drawSimpleFilledBackground(cr);
     if (progArgs->quadsBackground)
-        drawQuadsBackground(cr);        
+        drawQuadsBackground(cr);
     printf("Background filled.\n");
 
     for (int circle = 0; circle < progArgs->numCircles; ++circle)
