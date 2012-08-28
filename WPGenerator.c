@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define PROGRAM_NAME        "WPGenerator"
 #define M_PI                3.141592653589793
 #define PHI                 1.6180339887
 #define LOGO_FILENAME       "archlinux-logo-light-scalable.svg"
@@ -28,6 +29,7 @@ struct ProgramArguments {
     bool quadsBackground;
     bool dotPattern;
     bool noLogo;
+    bool help;
 };
 
 unsigned int urandomRng(void) {
@@ -165,9 +167,27 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
     free(logoDimensions);
 }
 
-void usage(void) {
-    printf("Usage: ./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --nologo]\n");
+void usage (int status) {
+    printf("WPGenerator is a tool which can create simple, nice looking wallpapers through argument variation.\n\n");
+
+    printf("Usage:\n"
+           "./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --nologo]\n\n");
+    printf(
+           "Optionname\tOptional Argument\tExplanation\n"
+           "--circles\tNUM_CIRCLES\t\tControls the number of circles drawn\n"
+           "--dots\t\t\t\t\ttoggles wheter a dot raster is drawn\n"
+           "--height\tHEIGHT\t\t\tscreen resolution height [px]\n"
+           "--nologo\t\t\t\tommit Arch Linux logo\n"
+           "--help\t\t\t\t\tshow this help message\n"
+           "--quads\t\t\t\t\tdraw quads in the background\n"
+           "--random\t\t\t\tdraw a random number of circles and waves\n"
+           "\t\t\t\t\t(max. %i, max. %i)\n"
+           "--waves\t\tNUM_WAVES\t\tcontrol the number of waves drawn\n"
+           "--width\t\tWIDTH\t\t\tscreen resolution width [px]\n",
+          MAX_RANDOM_CIRCLES, MAX_RANDOM_WAVES);
+    exit(status);
 }
+
 
 void checkNumericalArgument(char* arg) {
     regex_t regex;
@@ -175,8 +195,7 @@ void checkNumericalArgument(char* arg) {
 
     if(regexec(&regex, arg, 0, NULL, 0) == REG_NOMATCH) {
     	printf("No match %s", arg);
-    	usage();
-        exit(EXIT_FAILURE);
+    	usage(EXIT_FAILURE);
     }
 
     regfree(&regex);
@@ -191,8 +210,10 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
     bool quadsOptionSet = false;
     bool dotsOptionSet = false;
     bool showLogoOptionSet = false;
+    bool helpOptionSet = false;
     
 	static struct option long_options[] = {
+        { "help",    no_argument,       0, 'x' },
         { "nologo",  no_argument, 		0, 'l' },
         { "dots",    no_argument, 		0, 'd' },
         { "quads",   no_argument, 		0, 'q' },
@@ -206,13 +227,17 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
 	int shortOptionValue;
 	while (true) {
-		shortOptionValue = getopt_long(argc, argv, "w:h:csq", long_options, NULL);
+		shortOptionValue = getopt_long(argc, argv, "w:h:c:s:qx", long_options, NULL);
 
 		/* Detect the end of the options. */
 		if (shortOptionValue == -1)
 			break;
 
 		switch (shortOptionValue) {
+        case 'x':
+            helpOptionSet = true;
+            progArgs->help = true;
+            break;
         case 'l':
             showLogoOptionSet = true;
             progArgs->noLogo = true;
@@ -249,17 +274,15 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 			progArgs->numWaves = atoi(optarg);
 			break;
 		case '?':
-            usage();
-            exit(EXIT_FAILURE);
+            usage(EXIT_FAILURE);
 			break;
 		default:
 			abort();
 		}
 	}
 
-	if (! (widthOptionSet && heightOptionSet)) {
-		usage();
-		exit(EXIT_FAILURE);
+	if (!helpOptionSet && !(widthOptionSet && heightOptionSet)) {
+		usage(EXIT_FAILURE);
 	}
 
 	if (!circlesOptionSet)
@@ -282,6 +305,9 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
 		free(tmpString);
 	}
+
+    if(!helpOptionSet)
+        progArgs->help = false;
     
     if (!dotsOptionSet)
         progArgs->dotPattern = false;
@@ -357,6 +383,9 @@ void drawDotPattern(cairo_t* cr) {
 int main(int argc, char ** argv) {
     struct ProgramArguments * progArgs = (struct ProgramArguments *) malloc(sizeof(struct ProgramArguments));
     getArguments(argc, argv, progArgs);
+
+    if (progArgs->help)
+        usage(EXIT_SUCCESS);
 
     g_type_init();
     RsvgHandle* archLogoSVG;
