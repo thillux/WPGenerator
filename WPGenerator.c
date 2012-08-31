@@ -1,7 +1,8 @@
 #include <cairo.h>
+#include <fcntl.h>
+#include <getopt.h>
 #include <librsvg/rsvg.h>
 #include <librsvg/rsvg-cairo.h>
-#include <getopt.h>
 #include <limits.h>
 #include <math.h>
 #include <regex.h>
@@ -9,8 +10,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #define PROGRAM_NAME        "WPGenerator"
 #define M_PI                3.141592653589793
@@ -21,6 +22,8 @@
 #define MAX_RANDOM_CIRCLES  5000
 #define MAX_RANDOM_WAVES    5000
 
+enum LogoAlignment {LEFT_ALIGNED, CENTER_ALIGNED, RIGHT_ALIGNED};
+
 struct ProgramArguments {
     int screenWidth;
     int screenHeight;
@@ -30,6 +33,7 @@ struct ProgramArguments {
     bool dotPattern;
     bool noLogo;
     bool help;
+    enum LogoAlignment alignment;
 };
 
 unsigned int urandomRng(void) {
@@ -40,7 +44,7 @@ unsigned int urandomRng(void) {
     return randomInt;
 }
 
-// xorshift
+// xorshift, see http://en.wikipedia.org/wiki/Xorshift
 double rng(void) {
     static uint32_t x = 123456789;
     static uint32_t y = 362436069;
@@ -119,10 +123,11 @@ void drawRandomSineWaves(cairo_t* cr) {
     cairo_stroke(cr);
 }
 
-void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
+void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG, enum LogoAlignment alignment) {
     RsvgDimensionData* logoDimensions =(RsvgDimensionData*) malloc(sizeof(RsvgDimensionData));
     rsvg_handle_get_dimensions(archLogoSVG, logoDimensions);
 
+    double rightBorderWidth = 10.0;
     double surfaceHeight = getSurfaceHeight(cr);
     double surfaceWidth  = getSurfaceWidth(cr);
     double logoWidth = logoDimensions->width;
@@ -132,8 +137,22 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG) {
     logoHeight *= scale;
 
     double rectY = 1.0 / PHI * surfaceHeight - logoHeight / 2.0;
-    double logoOriginX = (surfaceWidth - logoWidth) / 2.0;
+    double logoOriginX;
     double logoOriginY = 1.0 / PHI * surfaceHeight - logoHeight / 2.0;
+
+    switch (alignment) {
+        case LEFT_ALIGNED:
+            logoOriginX = 0.0;
+            break;
+        case CENTER_ALIGNED:
+            logoOriginX = (surfaceWidth - logoWidth) / 2.0;
+            break;
+        case RIGHT_ALIGNED:
+            logoOriginX = surfaceWidth - logoWidth - rightBorderWidth;
+            break;
+        default: // should never come hear
+            exit(EXIT_FAILURE);
+    }
 
     // grey
     cairo_set_source_rgba(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0, 0.9);
@@ -179,6 +198,7 @@ void usage (int status) {
            "--height\tHEIGHT\t\t\tscreen resolution height [px]\n"
            "--nologo\t\t\t\tommit Arch Linux logo\n"
            "--help\t\t\t\t\tshow this help message\n"
+           "--logopos\tleft,center,right\tsets the alignment of the Arch Linux Logo\n"
            "--quads\t\t\t\t\tdraw quads in the background\n"
            "--random\t\t\t\tdraw a random number of circles and waves\n"
            "\t\t\t\t\t(max. %i, max. %i)\n"
@@ -211,29 +231,42 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
     bool dotsOptionSet = false;
     bool showLogoOptionSet = false;
     bool helpOptionSet = false;
+    bool alignmentOptionSet = false;
 
     static struct option long_options[] = {
+        { "logopos", required_argument, 0, 'a' },
         { "help",    no_argument,       0, 'x' },
         { "nologo",  no_argument,       0, 'l' },
         { "dots",    no_argument,       0, 'd' },
         { "quads",   no_argument,       0, 'q' },
         { "random",  no_argument,       0, 'r' },
-        { "width", 	 required_argument, 0, 'w' },
+        { "width",   required_argument, 0, 'w' },
         { "height",  required_argument, 0, 'h' },
         { "circles", required_argument, 0, 'c' },
-        { "waves", 	 required_argument, 0, 's' },
+        { "waves",   required_argument, 0, 's' },
         { 0, 0, 0, 0 }
     };
 
     int shortOptionValue;
     while (true) {
-        shortOptionValue = getopt_long(argc, argv, "xldqrwhcs", long_options, NULL);
+        shortOptionValue = getopt_long(argc, argv, "axldqrwhcs", long_options, NULL);
 
         /* Detect the end of the options. */
         if (shortOptionValue == -1)
         break;
 
         switch (shortOptionValue) {
+        case 'a':
+            alignmentOptionSet = true;
+            if (strncmp(optarg, "left", strlen("left")) == 0)
+                progArgs->alignment = LEFT_ALIGNED;
+            else if (strncmp(optarg, "center", strlen("center")) == 0)
+                progArgs->alignment = CENTER_ALIGNED;
+            else if (strncmp(optarg, "right", strlen("right")) == 0)
+                progArgs->alignment = RIGHT_ALIGNED;
+            else
+                usage(EXIT_FAILURE);
+            break;
         case 'x':
             helpOptionSet = true;
             progArgs->help = true;
@@ -280,6 +313,11 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
             abort();
         }
     }
+
+    // set standard values
+
+    if (!alignmentOptionSet)
+        progArgs->alignment = CENTER_ALIGNED;
 
     if (!helpOptionSet && !(widthOptionSet && heightOptionSet)) {
         usage(EXIT_FAILURE);
@@ -415,7 +453,7 @@ int main(int argc, char ** argv) {
     }
 
     if (!progArgs->noLogo) {
-        drawArchLogo(cr, archLogoSVG);
+        drawArchLogo(cr, archLogoSVG, progArgs->alignment);
         printf("Logo drawn.\n");
     }
 
