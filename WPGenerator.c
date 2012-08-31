@@ -186,11 +186,12 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG, enum LogoAlignment align
     free(logoDimensions);
 }
 
-void usage (int status) {
+void usage(int status) {
     printf("WPGenerator is a tool which can create simple, nice looking wallpapers through argument variation.\n\n");
 
     printf("Usage:\n"
-           "./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --nologo]\n\n");
+           "./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --nologo --logopos ALIGNMENT]\n\n");
+
     printf(
            "Optionname\tOptional Argument\tExplanation\n"
            "--circles\tNUM_CIRCLES\t\tControls the number of circles drawn\n"
@@ -315,7 +316,6 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
     }
 
     // set standard values
-
     if (!alignmentOptionSet)
         progArgs->alignment = CENTER_ALIGNED;
 
@@ -329,7 +329,8 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
         progArgs->numWaves = NUM_WAVES_DEFAULT;
 
     if (randomOptionSet) {
-        char * tmpString = (char*) malloc(50 * sizeof(char));
+        const size_t BUFSIZE = 50;
+        char* tmpString = (char*) malloc(BUFSIZE * sizeof(char));
 
         printf("Random Mode\n");
 
