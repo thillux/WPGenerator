@@ -36,6 +36,17 @@ struct ProgramArguments {
     enum LogoAlignment alignment;
 };
 
+struct ColorRGBA {
+    double red;
+    double green;
+    double blue;
+    double alpha;
+};
+
+static struct ColorRGBA colorDarkBlue = { 60.0/255.0, 76.0/255.0,  85.0/255.0,  1.0 };
+static struct ColorRGBA colorArchBlue = { 23.0/255.0, 147.0/255.0, 209.0/255.0, 1.0 };
+static struct ColorRGBA colorBgGrey   = { 38.0/255.0, 39.0/255.0, 33.0/255.0,   0.9 };
+
 unsigned int urandomRng(void) {
     int urandomFD = open("/dev/urandom", O_RDONLY);
     unsigned int randomInt;
@@ -72,9 +83,8 @@ void drawRandomCircles(cairo_t* cr) {
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth = getSurfaceWidth(cr);
 
-    // dark blue
     cairo_set_line_width(cr, 2.0 * rng() + 3.0);
-    cairo_set_source_rgba(cr, 60.0/255.0, 76.0/255.0, 85.0/255.0, 0.3 * rng());
+    cairo_set_source_rgba(cr, colorDarkBlue.red, colorDarkBlue.green, colorDarkBlue.blue, 0.3 * rng());
     cairo_arc(cr, rng() * surfaceWidth, rng() * surfaceHeight, rng() * 20, 0, 2.0 * M_PI);
     cairo_fill_preserve(cr);
     cairo_set_source_rgba(cr, 60.0/255.0, 76.0/255.0, 85.0/255.0, 0.3 * rng());
@@ -119,7 +129,7 @@ void drawRandomSineWaves(cairo_t* cr) {
     }
 
     // arch blue
-    cairo_set_source_rgba(cr, 23.0/255.0, 147.0/255.0, 209.0/255.0, 0.1 * rng());
+    cairo_set_source_rgba(cr, colorArchBlue.red, colorArchBlue.green, colorArchBlue.blue, 0.1 * rng());
     cairo_stroke(cr);
 }
 
@@ -155,7 +165,7 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG, enum LogoAlignment align
     }
 
     // grey
-    cairo_set_source_rgba(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0, 0.9);
+    cairo_set_source_rgba(cr, colorBgGrey.red, colorBgGrey.green, colorBgGrey.blue, colorBgGrey.alpha);
     cairo_rectangle(cr, 0, rectY, surfaceWidth, logoHeight);
     cairo_fill(cr);
 
@@ -362,7 +372,7 @@ void drawSimpleFilledBackground(cairo_t* cr) {
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
 
-    cairo_set_source_rgba(cr, 38.0/255.0, 39.0/255.0, 33.0/255.0, 1.0);
+    cairo_set_source_rgba(cr, colorBgGrey.red, colorBgGrey.green, colorBgGrey.blue, 1.0);
     cairo_rectangle(cr, 0, 0, surfaceWidth, surfaceHeight);
     cairo_fill(cr);
 
