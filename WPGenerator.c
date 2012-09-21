@@ -2,7 +2,6 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <librsvg/rsvg.h>
-#include <librsvg/rsvg-cairo.h>
 #include <limits.h>
 #include <math.h>
 #include <regex.h>
@@ -33,6 +32,7 @@ struct ProgramArguments {
     bool dotPattern;
     bool noLogo;
     bool help;
+    bool stripedBackground;
     enum LogoAlignment alignment;
 };
 
@@ -213,6 +213,7 @@ void usage(int status) {
            "--quads\t\t\t\t\tdraw quads in the background\n"
            "--random\t\t\t\tdraw a random number of circles and waves\n"
            "\t\t\t\t\t(max. %i, max. %i)\n"
+           "--stripes\t\t\t\tdraw a striped background\n" 
            "--waves\t\tNUM_WAVES\t\tcontrol the number of waves drawn\n"
            "--width\t\tWIDTH\t\t\tscreen resolution width [px]\n",
           MAX_RANDOM_CIRCLES, MAX_RANDOM_WAVES);
@@ -243,6 +244,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
     bool showLogoOptionSet = false;
     bool helpOptionSet = false;
     bool alignmentOptionSet = false;
+    bool stripedBackgroundOptionSet = false;
 
     static struct option long_options[] = {
         { "logopos", required_argument, 0, 'a' },
@@ -255,6 +257,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
         { "height",  required_argument, 0, 'h' },
         { "circles", required_argument, 0, 'c' },
         { "waves",   required_argument, 0, 's' },
+        { "stripes", no_argument,       0, 't' },
         { 0, 0, 0, 0 }
     };
 
@@ -317,6 +320,10 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
             wavesOptionSet = true;
             progArgs->numWaves = atoi(optarg);
             break;
+        case 't':
+            stripedBackgroundOptionSet = true;
+            progArgs->stripedBackground = true;
+            break;
         case '?':
             usage(EXIT_FAILURE);
             break;
@@ -364,6 +371,9 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
     if (!quadsOptionSet)
         progArgs->quadsBackground = false;
 
+    if (!stripedBackgroundOptionSet)
+        progArgs->stripedBackground = false;
+    
     if (!showLogoOptionSet)
         progArgs->noLogo = false;
 }
@@ -384,6 +394,27 @@ void drawSimpleFilledBackground(cairo_t* cr) {
     cairo_set_source(cr, pat);
     cairo_fill(cr);
     cairo_pattern_destroy(pat);
+}
+
+void drawStripedBackground(cairo_t* cr) {
+    int surfaceHeight = getSurfaceHeight(cr);
+    int surfaceWidth  = getSurfaceWidth(cr);
+       
+    int width = 0;
+    int stripeWidth = 0;
+    
+    while (width < surfaceWidth) {
+        stripeWidth = 3;
+        double colorFactor = rng();
+        cairo_set_source_rgba(cr, 
+                              colorFactor * colorArchBlue.red,
+                              colorFactor * colorArchBlue.green, 
+                              colorFactor * colorArchBlue.blue,
+                              0.2);
+        cairo_rectangle(cr, width, 0, width + stripeWidth, surfaceHeight);
+        cairo_fill(cr);
+        width += stripeWidth;
+    }
 }
 
 void drawQuadsBackground(cairo_t* cr) {
@@ -448,6 +479,9 @@ int main(int argc, char ** argv) {
     drawSimpleFilledBackground(cr);
     if (progArgs->quadsBackground)
         drawQuadsBackground(cr);
+        
+    if (progArgs->stripedBackground)
+        drawStripedBackground(cr);
     printf("Background filled.\n");
 
     for (int circle = 0; circle < progArgs->numCircles; ++circle)
