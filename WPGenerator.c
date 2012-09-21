@@ -45,7 +45,7 @@ struct ColorRGBA {
 
 static struct ColorRGBA colorDarkBlue = { 60.0/255.0, 76.0/255.0,  85.0/255.0,  1.0 };
 static struct ColorRGBA colorArchBlue = { 23.0/255.0, 147.0/255.0, 209.0/255.0, 1.0 };
-static struct ColorRGBA colorBgGrey   = { 38.0/255.0, 39.0/255.0, 33.0/255.0,   0.9 };
+static struct ColorRGBA colorBgGrey   = { 38.0/255.0, 39.0/255.0,  33.0/255.0,  0.9 };
 
 unsigned int urandomRng(void) {
     int urandomFD = open("/dev/urandom", O_RDONLY);
@@ -213,7 +213,7 @@ void usage(int status) {
            "--quads\t\t\t\t\tdraw quads in the background\n"
            "--random\t\t\t\tdraw a random number of circles and waves\n"
            "\t\t\t\t\t(max. %i, max. %i)\n"
-           "--stripes\t\t\t\tdraw a striped background\n" 
+           "--stripes\t\t\t\tdraw a striped background\n"
            "--waves\t\tNUM_WAVES\t\tcontrol the number of waves drawn\n"
            "--width\t\tWIDTH\t\t\tscreen resolution width [px]\n",
           MAX_RANDOM_CIRCLES, MAX_RANDOM_WAVES);
@@ -373,7 +373,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
     if (!stripedBackgroundOptionSet)
         progArgs->stripedBackground = false;
-    
+
     if (!showLogoOptionSet)
         progArgs->noLogo = false;
 }
@@ -399,16 +399,16 @@ void drawSimpleFilledBackground(cairo_t* cr) {
 void drawStripedBackground(cairo_t* cr) {
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
-       
+
     int width = 0;
     int stripeWidth = 0;
-    
+
     while (width < surfaceWidth) {
         stripeWidth = 3;
         double colorFactor = rng();
-        cairo_set_source_rgba(cr, 
+        cairo_set_source_rgba(cr,
                               colorFactor * colorArchBlue.red,
-                              colorFactor * colorArchBlue.green, 
+                              colorFactor * colorArchBlue.green,
                               colorFactor * colorArchBlue.blue,
                               0.2);
         cairo_rectangle(cr, width, 0, width + stripeWidth, surfaceHeight);
@@ -479,7 +479,7 @@ int main(int argc, char ** argv) {
     drawSimpleFilledBackground(cr);
     if (progArgs->quadsBackground)
         drawQuadsBackground(cr);
-        
+
     if (progArgs->stripedBackground)
         drawStripedBackground(cr);
     printf("Background filled.\n");
