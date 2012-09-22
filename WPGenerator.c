@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #define PROGRAM_NAME        "WPGenerator"
 #define M_PI                3.141592653589793
@@ -70,16 +71,22 @@ double rng(void) {
 }
 
 int getSurfaceWidth(cairo_t* cr) {
+    assert(cr);
+
     cairo_surface_t* surface = cairo_get_group_target(cr);
     return cairo_image_surface_get_width(surface);
 }
 
 int getSurfaceHeight(cairo_t* cr) {
+    assert(cr);
+
     cairo_surface_t* surface = cairo_get_group_target(cr);
     return cairo_image_surface_get_height(surface);
 }
 
 void drawRandomCircles(cairo_t* cr) {
+    assert(cr);
+
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth = getSurfaceWidth(cr);
 
@@ -92,6 +99,8 @@ void drawRandomCircles(cairo_t* cr) {
 }
 
 void drawRandomSineWaves(cairo_t* cr) {
+    assert(cr);
+
     cairo_new_path(cr);
     cairo_set_line_width(cr, 2.0);
 
@@ -134,7 +143,10 @@ void drawRandomSineWaves(cairo_t* cr) {
 }
 
 void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG, enum LogoAlignment alignment) {
-    RsvgDimensionData* logoDimensions =(RsvgDimensionData*) malloc(sizeof(RsvgDimensionData));
+    assert(cr);
+    assert(archLogoSVG);
+
+    RsvgDimensionData* logoDimensions = (RsvgDimensionData*) malloc(sizeof(RsvgDimensionData));
     rsvg_handle_get_dimensions(archLogoSVG, logoDimensions);
 
     double rightBorderWidth = 10.0;
@@ -187,8 +199,6 @@ void drawArchLogo(cairo_t* cr, RsvgHandle* archLogoSVG, enum LogoAlignment align
     cairo_scale(logoContext, scale, scale);
 
     rsvg_handle_render_cairo(archLogoSVG, logoContext);
-    rsvg_handle_close(archLogoSVG, NULL);
-    g_object_unref(archLogoSVG);
 
     cairo_restore(logoContext);
     cairo_destroy(logoContext);
@@ -222,6 +232,8 @@ void usage(int status) {
 
 
 void checkNumericalArgument(char* arg) {
+    assert(arg);
+
     regex_t regex;
     regcomp(&regex, "^[[:digit:]]+$", REG_EXTENDED);
 
@@ -234,6 +246,9 @@ void checkNumericalArgument(char* arg) {
 }
 
 void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
+    assert(argv);
+    assert(progArgs);
+
     bool widthOptionSet = false;
     bool heightOptionSet = false;
     bool circlesOptionSet = false;
@@ -379,6 +394,8 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 }
 
 void drawSimpleFilledBackground(cairo_t* cr) {
+    assert(cr);
+
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
 
@@ -397,6 +414,8 @@ void drawSimpleFilledBackground(cairo_t* cr) {
 }
 
 void drawStripedBackground(cairo_t* cr) {
+    assert(cr);
+
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
 
@@ -418,6 +437,8 @@ void drawStripedBackground(cairo_t* cr) {
 }
 
 void drawQuadsBackground(cairo_t* cr) {
+    assert(cr);
+
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
 
@@ -438,6 +459,8 @@ void drawQuadsBackground(cairo_t* cr) {
 }
 
 void drawDotPattern(cairo_t* cr) {
+    assert(cr);
+
     int surfaceHeight = getSurfaceHeight(cr);
     int surfaceWidth  = getSurfaceWidth(cr);
 
@@ -466,11 +489,11 @@ int main(int argc, char ** argv) {
         usage(EXIT_SUCCESS);
 
     g_type_init();
-    RsvgHandle* archLogoSVG;
+    RsvgHandle* archLogoSVG = NULL;
     archLogoSVG = rsvg_handle_new_from_file(LOGO_FILENAME, NULL);
     printf("Reading logo done.\n");
 
-    cairo_surface_t* surface;
+    cairo_surface_t* surface = NULL;
     surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32,
                                          progArgs->screenWidth,
                                          progArgs->screenHeight);
@@ -501,6 +524,9 @@ int main(int argc, char ** argv) {
         drawArchLogo(cr, archLogoSVG, progArgs->alignment);
         printf("Logo drawn.\n");
     }
+
+    rsvg_handle_close(archLogoSVG, NULL);
+    g_object_unref(archLogoSVG);
 
     cairo_surface_write_to_png(surface, "wallpaper.png");
     printf("Wallpaper written to file.\n");
