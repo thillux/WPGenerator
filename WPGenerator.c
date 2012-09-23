@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <cairo.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -11,7 +12,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <assert.h>
 
 #define PROGRAM_NAME        "WPGenerator"
 #define M_PI                3.141592653589793
