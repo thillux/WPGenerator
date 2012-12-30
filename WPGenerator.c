@@ -14,7 +14,9 @@
 #include <unistd.h>
 
 #define PROGRAM_NAME        "WPGenerator"
+#ifndef M_PI
 #define M_PI                3.141592653589793
+#endif
 #define PHI                 1.6180339887
 #define LOGO_FILENAME       "archlinux-logo-light-scalable.svg"
 #define NUM_CIRCLES_DEFAULT 0
