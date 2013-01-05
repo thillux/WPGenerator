@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <librsvg/rsvg.h>
+#include <librsvg/rsvg-cairo.h>
 #include <limits.h>
 #include <math.h>
 #include <regex.h>
@@ -53,7 +54,8 @@ static struct ColorRGBA colorBgGrey   = { 38.0/255.0, 39.0/255.0,  33.0/255.0,  
 unsigned int urandomRng(void) {
     int urandomFD = open("/dev/urandom", O_RDONLY);
     unsigned int randomInt;
-    read(urandomFD, &randomInt, sizeof(randomInt));
+    ssize_t ret = read(urandomFD, &randomInt, sizeof(randomInt));
+    assert(ret == sizeof(randomInt));
     close(urandomFD);
     return randomInt;
 }
