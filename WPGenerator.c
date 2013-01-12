@@ -406,15 +406,6 @@ void drawSimpleFilledBackground(cairo_t* cr) {
     cairo_set_source_rgba(cr, colorBgGrey.red, colorBgGrey.green, colorBgGrey.blue, 1.0);
     cairo_rectangle(cr, 0, 0, surfaceWidth, surfaceHeight);
     cairo_fill(cr);
-
-    cairo_pattern_t *pat;
-    pat = cairo_pattern_create_linear(0.0, 0.0,  surfaceWidth, surfaceHeight);
-    cairo_pattern_add_color_stop_rgba(pat, 0, 23.0/255.0, 147.0/255.0, 209.0/255.0, 0.1);
-    cairo_pattern_add_color_stop_rgba(pat, 1, 100.0/255.0, 100.0/255.0, 100.0/255.0, 0.1);
-    cairo_rectangle(cr, 0, 0, surfaceWidth, surfaceHeight);
-    cairo_set_source(cr, pat);
-    cairo_fill(cr);
-    cairo_pattern_destroy(pat);
 }
 
 void drawStripedBackground(cairo_t* cr) {
@@ -447,7 +438,7 @@ void drawQuadsBackground(cairo_t* cr) {
     int surfaceWidth  = getSurfaceWidth(cr);
 
     cairo_set_line_width(cr, 0.5);
-    int rectDim = surfaceWidth/200;
+    int rectDim = surfaceWidth/500;
     int x = 0.0;
     int y = 0.0;
     while (y < surfaceHeight) {
