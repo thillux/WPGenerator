@@ -23,6 +23,6 @@ or implicitly:
 	
 	./WPGenerator --width 1920 --height 1200 --random
 
-# TODO
-* faster wave drawing
+Draw wallpaper with quads:
 
+	./WPGenerator --width 1920 --height 1200 --quads [--nologo]
