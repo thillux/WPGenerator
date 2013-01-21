@@ -3,7 +3,9 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <librsvg/rsvg.h>
+#ifndef RSVG_CAIRO_H
 #include <librsvg/rsvg-cairo.h>
+#endif
 #include <limits.h>
 #include <math.h>
 #include <regex.h>
