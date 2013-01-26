@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <getopt.h>
 #include <librsvg/rsvg.h>
-#include <librsvg/rsvg-cairo.h>
 #include <limits.h>
 #include <math.h>
 #include <regex.h>
