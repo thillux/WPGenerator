@@ -232,7 +232,7 @@ void usage(int status) {
     printf("WPGenerator is a tool which can create simple, nice looking wallpapers through argument variation.\n\n");
 
     printf("Usage:\n"
-           "./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --nologo --logopos ALIGNMENT]\n\n");
+           "./WPGenerator --width WIDTH --height HEIGHT [--circles NUM_CIRCLES --waves NUM_WAVES --random --dots --quads --outFile FILENAME --nologo --logopos ALIGNMENT]\n\n");
 
     printf(
            "Optionname\tOptional Argument\tExplanation\n"
@@ -242,6 +242,7 @@ void usage(int status) {
            "--nologo\t\t\t\tommit Arch Linux logo\n"
            "--help\t\t\t\t\tshow this help message\n"
            "--logopos\tleft,center,right\tsets the alignment of the Arch Linux Logo\n"
+    	   "--outFile\tFILENAME\t\tpath of the generated wallpaper\n"
            "--quads\t\t\t\t\tdraw quads in the background\n"
            "--random\t\t\t\tdraw a random number of circles and waves\n"
            "\t\t\t\t\t(max. %i, max. %i)\n"
