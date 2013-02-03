@@ -1,5 +1,5 @@
-CC:=gcc
-CFLAGS:=-O3 -march=native -std=c99 -g -Wall -Wextra -Werror
+CC:=clang
+CFLAGS:=-O3 -march=native -std=c99 -g -Wall -Wextra -Werror -pedantic
 LIBS:=`pkg-config --libs cairo librsvg-2.0`
 INCLUDES:=`pkg-config --cflags cairo librsvg-2.0`
 

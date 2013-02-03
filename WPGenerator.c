@@ -22,14 +22,15 @@
 #endif
 #define PHI                 1.6180339887
 #define LOGO_FILENAME       "archlinux-logo-light-scalable.svg"
+#define FILENAME_MAXLENGTH	1000
 #define NUM_CIRCLES_DEFAULT 0
 #define NUM_WAVES_DEFAULT   0
 #define MAX_RANDOM_CIRCLES  5000
 #define MAX_RANDOM_WAVES    5000
 
 // http://stackoverflow.com/questions/195975/how-to-make-a-char-string-from-a-c-macros-value
-#define xstr(s) str(s)
-#define str(s) #s
+#define xstr(s) blub(s)
+#define blub(s) #s
 
 enum LogoAlignment {LEFT_ALIGNED, CENTER_ALIGNED, RIGHT_ALIGNED};
 
@@ -38,6 +39,7 @@ struct ProgramArguments {
     int screenHeight;
     int numCircles;
     int numWaves;
+    char * outFile;
     bool quadsBackground;
     bool dotPattern;
     bool noLogo;
@@ -64,6 +66,16 @@ unsigned int urandomRng(void) {
     assert(ret == sizeof(randomInt));
     close(urandomFD);
     return randomInt;
+}
+
+char* strdup(const char *str) {
+    int n = strlen(str) + 1;
+    char *dup = malloc(n);
+    if(dup)
+    {
+        strcpy(dup, str);
+    }
+    return dup;
 }
 
 // xorshift, see http://en.wikipedia.org/wiki/Xorshift
@@ -270,6 +282,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
     bool helpOptionSet = false;
     bool alignmentOptionSet = false;
     bool stripedBackgroundOptionSet = false;
+    bool outFileOptionSet = false;
 
     static struct option long_options[] = {
         { "logopos", required_argument, 0, 'a' },
@@ -283,6 +296,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
         { "circles", required_argument, 0, 'c' },
         { "waves",   required_argument, 0, 's' },
         { "stripes", no_argument,       0, 't' },
+        { "outFile", required_argument, 0, 'o' },
         { 0, 0, 0, 0 }
     };
 
@@ -340,6 +354,10 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
             circlesOptionSet = true;
             progArgs->numCircles = atoi(optarg);
             break;
+        case 'o':
+        	outFileOptionSet = true;
+        	progArgs->outFile = strdup(optarg);
+        	break;
         case 's':
             checkNumericalArgument(optarg);
             wavesOptionSet = true;
@@ -401,6 +419,9 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
 
     if (!showLogoOptionSet)
         progArgs->noLogo = false;
+
+    if (!outFileOptionSet)
+    	progArgs->outFile = strdup(LOGO_FILENAME);
 }
 
 void drawSimpleFilledBackground(cairo_t* cr) {
@@ -538,11 +559,12 @@ int main(int argc, char ** argv) {
     rsvg_handle_close(archLogoSVG, NULL);
     g_object_unref(archLogoSVG);
 
-    cairo_surface_write_to_png(surface, "wallpaper.png");
+    cairo_surface_write_to_png(surface, progArgs->outFile);
     printf("Wallpaper written to file.\n");
 
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
+    free(progArgs->outFile);
     free(progArgs);
     free(logoPath);
     printf("Exiting.\n");
