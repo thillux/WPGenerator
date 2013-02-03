@@ -5,8 +5,10 @@ INCLUDES:=`pkg-config --cflags cairo librsvg-2.0`
 
 PROJECTNAME:=WPGenerator
 
+RESSOURCEDIR:=img
+
 all: WPGenerator.c
-	$(CC) $(CFLAGS) $(INCLUDES) -o $(PROJECTNAME) $< $(LIBS)
+	$(CC) $(CFLAGS) $(INCLUDES) -D DATAROOTDIR="$(RESSOURCEDIR)" -o $(PROJECTNAME) $< $(LIBS)
 
 clean:
 	rm -f *.o

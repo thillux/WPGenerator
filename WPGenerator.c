@@ -27,6 +27,10 @@
 #define MAX_RANDOM_CIRCLES  5000
 #define MAX_RANDOM_WAVES    5000
 
+// http://stackoverflow.com/questions/195975/how-to-make-a-char-string-from-a-c-macros-value
+#define xstr(s) str(s)
+#define str(s) #s
+
 enum LogoAlignment {LEFT_ALIGNED, CENTER_ALIGNED, RIGHT_ALIGNED};
 
 struct ProgramArguments {
@@ -487,7 +491,16 @@ int main(int argc, char ** argv) {
 
     g_type_init();
     RsvgHandle* archLogoSVG = NULL;
-    archLogoSVG = rsvg_handle_new_from_file(LOGO_FILENAME, NULL);
+
+    // assemble logo path
+    const char* datarootdir = xstr(DATAROOTDIR);
+    size_t datarootdirLen = strlen(datarootdir);
+    size_t filenameLen = strlen(LOGO_FILENAME);
+    char* logoPath = (char*) malloc(sizeof(char) * (datarootdirLen + filenameLen + 2));
+    strcat(logoPath, datarootdir);
+    strcat(logoPath, "/");
+    strcat(logoPath, LOGO_FILENAME);
+    archLogoSVG = rsvg_handle_new_from_file(logoPath, NULL);
     printf("Reading logo done.\n");
 
     cairo_surface_t* surface = NULL;
@@ -531,6 +544,7 @@ int main(int argc, char ** argv) {
     cairo_destroy(cr);
     cairo_surface_destroy(surface);
     free(progArgs);
+    free(logoPath);
     printf("Exiting.\n");
     return EXIT_SUCCESS;
 }
