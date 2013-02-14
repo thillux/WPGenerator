@@ -27,6 +27,7 @@
 #define NUM_WAVES_DEFAULT   0
 #define MAX_RANDOM_CIRCLES  5000
 #define MAX_RANDOM_WAVES    5000
+#define STANDARD_OUTFILENAME "wallpaper.png"
 
 // http://stackoverflow.com/questions/195975/how-to-make-a-char-string-from-a-c-macros-value
 #define xstr(s) blub(s)
@@ -422,7 +423,7 @@ void getArguments(int argc, char ** argv, struct ProgramArguments* progArgs) {
         progArgs->noLogo = false;
 
     if (!outFileOptionSet)
-    	progArgs->outFile = strdup(LOGO_FILENAME);
+    	progArgs->outFile = strdup(STANDARD_OUTFILENAME);
 }
 
 void drawSimpleFilledBackground(cairo_t* cr) {
@@ -466,7 +467,7 @@ void drawQuadsBackground(cairo_t* cr) {
     int surfaceWidth  = getSurfaceWidth(cr);
 
     cairo_set_line_width(cr, 0.5);
-    int rectDim = surfaceWidth/500;
+    int rectDim = surfaceWidth/200;
     int x = 0.0;
     int y = 0.0;
     while (y < surfaceHeight) {
