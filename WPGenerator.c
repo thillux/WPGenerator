@@ -512,7 +512,6 @@ int main(int argc, char ** argv) {
     if (progArgs->help)
         usage(EXIT_SUCCESS);
 
-    g_type_init();
     RsvgHandle* archLogoSVG = NULL;
 
     // assemble logo path
