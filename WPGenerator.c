@@ -518,10 +518,12 @@ int main(int argc, char ** argv) {
     const char* datarootdir = xstr(DATAROOTDIR);
     size_t datarootdirLen = strlen(datarootdir);
     size_t filenameLen = strlen(LOGO_FILENAME);
-    char* logoPath = (char*) malloc(sizeof(char) * (datarootdirLen + filenameLen + 2));
+    char* logoPath = (char*) calloc(datarootdirLen + filenameLen + 2, sizeof(char));
+    // printf("DATAROOTDIR %s\n", datarootdir);
     strcat(logoPath, datarootdir);
     strcat(logoPath, "/");
     strcat(logoPath, LOGO_FILENAME);
+    printf("Reading Arch Linux logo from %s\n", logoPath);
     archLogoSVG = rsvg_handle_new_from_file(logoPath, NULL);
     printf("Reading logo done.\n");
 
