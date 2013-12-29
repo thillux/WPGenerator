@@ -524,7 +524,12 @@ int main(int argc, char ** argv) {
     strcat(logoPath, "/");
     strcat(logoPath, LOGO_FILENAME);
     printf("Reading Arch Linux logo from %s\n", logoPath);
-    archLogoSVG = rsvg_handle_new_from_file(logoPath, NULL);
+    GError* error = NULL;
+    archLogoSVG = rsvg_handle_new_from_file(logoPath, &error);
+    if (archLogoSVG == NULL) {
+      printf("error opening svg, exiting!\n");
+      exit(EXIT_FAILURE);
+    }
     printf("Reading logo done.\n");
 
     cairo_surface_t* surface = NULL;

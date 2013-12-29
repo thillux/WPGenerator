@@ -7,12 +7,12 @@ SET(CMAKE_MODULE_PATH "CMake")
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Release")
   set(RESSOURCEDIR "${CMAKE_INSTALL_PREFIX}/share/${PROJECT_NAME}")
+  add_definitions("-O2 -std=c99 -march=native")
 ELSE()
   set(RESSOURCEDIR "${CMAKE_SOURCE_DIR}/res")
+  add_definitions("-O0 -std=c99 -march=native -g -Wall -Wextra -pedantic")
 ENDIF(CMAKE_BUILD_TYPE STREQUAL "Release")
 add_definitions("-D DATAROOTDIR=${RESSOURCEDIR}")
-
-add_definitions("-O2 -std=c99 -march=native -g -Wall -Wextra -pedantic")
 
 add_executable(${PROJECT_NAME} ${Sources})
 
@@ -27,3 +27,4 @@ endif (RSVG_FOUND)
 
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 install(FILES "res/archlinux-logo-light-scalable.svg" DESTINATION "share/${PROJECT_NAME}")
+
